@@ -1,24 +1,24 @@
-package.path  = package.path
-      .. ';./test/?.lua'
-      .. ';./test/?/init.lua'
-local fs = require 'bee.filesystem'
-local sys = require 'bee.sys'
-local rootPath = sys.exe_path():parent_path():parent_path():string()
-ROOT = fs.path(rootPath)
-TEST = true
-DEVELOP = true
+package.path     = package.path
+    .. ';./test/?.lua'
+    .. ';./test/?/init.lua'
+local fs         = require 'bee.filesystem'
+local sys        = require 'bee.sys'
+local rootPath   = sys.exe_path():parent_path():parent_path():string()
+ROOT             = fs.path(rootPath)
+TEST             = true
+DEVELOP          = true
 --FOOTPRINT = true
 --TRACE = true
-LOGPATH  = LOGPATH  or (ROOT:string() .. '/log')
-METAPATH = METAPATH or (ROOT:string() .. '/meta')
+LOGPATH          = LOGPATH or (ROOT:string() .. '/log')
+METAPATH         = METAPATH or (ROOT:string() .. '/meta')
 TARGET_TEST_NAME = nil
 
 if arg then
-   for _, v in pairs(arg) do
-       if v:sub(1, 3) == "-n=" or v:sub(1, 7) == "--name=" then
+    for _, v in pairs(arg) do
+        if v:sub(1, 3) == "-n=" or v:sub(1, 7) == "--name=" then
             TARGET_TEST_NAME = v:sub(v:find('=') + 1)
-       end
-   end
+        end
+    end
 end
 
 --collectgarbage 'generational'
@@ -92,7 +92,7 @@ local files = require "files"
 local function main()
     require 'utility'.enableCloseFunction()
     require 'utility'.enableFormatString()
-    require 'client' .client 'VSCode'
+    require 'client'.client 'VSCode'
 
     local lclient = require 'lclient'
     local ws      = require 'workspace'

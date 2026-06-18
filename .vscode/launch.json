@@ -6,7 +6,7 @@
 			"name": "🍺test",
 			"type": "lua",
 			"request": "launch",
-			"stopOnEntry": false,
+			"stopOnEntry": true,
 			"program": "${workspaceRoot}/test.lua",
 			"luaexe": "${workspaceFolder}/bin/lua-language-server",
 			"luaVersion": "lua55",
@@ -27,8 +27,7 @@
 			"request": "attach",
 			"stopOnEntry": false,
 			"address": "127.0.0.1:11422",
-			"outputCapture": [
-			],
+			"outputCapture": [],
 			"luaVersion": "lua55",
 			"sourceFormat": "string",
 			"sourceMaps": [
@@ -59,8 +58,7 @@
 			"cpath": "${workspaceFolder}/bin/?.dll;${workspaceFolder}/bin/?.so",
 			"console": "integratedTerminal",
 			"internalConsoleOptions": "openOnSessionStart",
-			"arg": [
-			],
+			"arg": [],
 			"luaVersion": "lua55",
 			"sourceCoding": "utf8",
 			"outputCapture": [
@@ -81,8 +79,7 @@
 			"cpath": "${workspaceFolder}/bin/?.dll;${workspaceFolder}/bin/?.so",
 			"console": "integratedTerminal",
 			"internalConsoleOptions": "openOnSessionStart",
-			"arg": [
-			],
+			"arg": [],
 			"luaVersion": "lua55",
 			"sourceCoding": "utf8",
 			"outputCapture": [
@@ -103,8 +100,7 @@
 			"cpath": "${workspaceFolder}/bin/?.dll;${workspaceFolder}/bin/?.so",
 			"console": "integratedTerminal",
 			"internalConsoleOptions": "openOnSessionStart",
-			"arg": [
-			],
+			"arg": [],
 			"luaVersion": "lua55",
 			"sourceCoding": "utf8",
 			"outputCapture": [

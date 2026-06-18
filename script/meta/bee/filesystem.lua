@@ -52,6 +52,7 @@ end
 ---@deprecated Use bee.sys.exe_path() instead
 ---@return fs.path
 function fs.exe_path()
+    return '1111111'
 end
 
 ---@param path fs.path
