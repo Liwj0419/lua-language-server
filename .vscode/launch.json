@@ -8,6 +8,7 @@
 			"request": "launch",
 			"stopOnEntry": true,
 			"program": "${workspaceRoot}/test.lua",
+			"arg": ["--name=crossfile"],
 			"luaexe": "${workspaceFolder}/bin/lua-language-server",
 			"luaVersion": "lua55",
 			"sourceCoding": "utf8",
