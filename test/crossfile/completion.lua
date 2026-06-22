@@ -536,42 +536,6 @@ TEST {
 
 TEST {
     {
-        path = 'datautils.lua',
-        content = [[
-            return {
-                get = 1,
-                set = 2,
-            }
-        ]]
-    },
-    {
-        path = 'bootstrap.lua',
-        content = [[
-            g = {}
-            g.data = datautils
-        ]]
-    },
-    {
-        path = 'main.lua',
-        content = [[
-            g.data.<??>
-        ]],
-        main = true,
-    },
-    completion = {
-        {
-            label = 'get',
-            kind = CompletionItemKind.Enum,
-        },
-        {
-            label = 'set',
-            kind = CompletionItemKind.Enum,
-        },
-    }
-}
-
-TEST {
-    {
         path = 'a.lua',
         content = [[
             zabc = 1

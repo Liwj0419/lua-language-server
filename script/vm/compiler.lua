@@ -74,23 +74,6 @@ function vm.bindDocs(source)
     return false
 end
 
----@param source parser.object
----@param name string
----@return boolean
-local function bindModuleByRequireName(source, name)
-    local uri = rpath.findUrisByRequireName(guide.getUri(source), name)[1]
-    if not uri then
-        return false
-    end
-    local state = files.getState(uri)
-    local ast   = state and state.ast
-    if not ast then
-        return false
-    end
-    vm.setNode(source, vm.compileNode(ast), true)
-    return true
-end
-
 ---@param source parser.object | vm.variable
 ---@param key string|vm.global|vm.ANY|vm.ANYDOC
 ---@param pushResult fun(res: parser.object, markDoc?: boolean)
@@ -2521,14 +2504,12 @@ local compilerSwitch = util.switch()
         local scp = scope.getScope(uri)
         vm.setNode(source, globalNode)
         if globalNode.cate == 'variable' then
-            local hasVisibleSet = false
             for luri, link in pairs(globalNode.links) do
                 if not scp:isVisible(luri) then
                     goto continue
                 end
                 local firstSet = link.sets[1]
                 if firstSet then
-                    hasVisibleSet = true
                     local setNode = vm.compileNode(firstSet)
                     vm.setNode(source, setNode)
                     if vm.isMetaFile(luri) then
@@ -2539,10 +2520,6 @@ local compilerSwitch = util.switch()
                     end
                 end
                 ::continue::
-            end
-            if  not hasVisibleSet
-            and not globalNode.name:find(vm.ID_SPLITE, 1, true) then
-                bindModuleByRequireName(source, globalNode.name)
             end
         end
         if globalNode.cate == 'type' then
