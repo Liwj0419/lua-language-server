@@ -862,6 +862,42 @@ TEST {
     }
 }
 
+TEST {
+    {
+        path = 'field-host.lua',
+        content = [[
+            Host = {}
+            Host.requireList = {
+                'field-extension',
+            }
+        ]]
+    },
+    {
+        path = 'field-extension.lua',
+        content = [[
+            local Host = Host
+            Host.extendedField = 1
+        ]]
+    },
+    {
+        path = 'main.lua',
+        main = true,
+        content = [[
+            Host.<??>
+        ]]
+    },
+    completion = {
+        {
+            label = 'extendedField',
+            kind  = CompletionItemKind.Enum,
+        },
+        {
+            label = 'requireList',
+            kind  = CompletionItemKind.Enum,
+        },
+    }
+}
+
 Cared['description'] = true
 TEST {
     {
