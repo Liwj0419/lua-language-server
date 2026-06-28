@@ -19,7 +19,10 @@
 			],
 			"windows": {
 				"luaexe": "${workspaceFolder}/bin/lua-language-server.exe"
-			}
+			},
+			"arg": [
+				"--name=^crossfile$",
+			],
 		},
 		{
 			"name": "🍄attach",

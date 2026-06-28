@@ -105,6 +105,45 @@ local function WITH_CONFIG(cfg, f)
     end
 end
 
+--mytest
+TEST {
+    {
+        path = 'a.lua',
+        content = [[
+            local DataUitls = {}
+            function DataUitls:Func1()
+            end
+            return DataUitls
+        ]]
+    },
+    {
+        path = 'b.lua',
+        content = [[
+            local DataUitls = G.Data
+            function DataUitls:Func2()
+            end
+        ]]
+    },
+    {
+        path = 'main.lua',
+        main = true,
+        content = [[
+            G.Data = require('a')
+            G.Data.<??>
+        ]]
+    },
+    completion = {
+        {
+            label = 'Func1',
+            kind  = CompletionItemKind.Method,
+        }
+    }
+}
+
+if true then
+    return
+end
+
 TEST {
     {
         path = 'abc.lua',
