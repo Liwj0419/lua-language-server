@@ -21,7 +21,9 @@
         },
         "ignoredFiles": "Opened",
         "libraryFiles": "Opened",
-        "unusedLocalExclude": [ "_*" ]
+        "unusedLocalExclude": [
+            "_*"
+        ]
     },
     "runtime": {
         "version": "Lua 5.5",
@@ -57,5 +59,9 @@
         "privateName": [
             "_*"
         ]
-    }
+    },
+    // "Lua.completion.globalAliasFields": [
+    //     "G.Data"
+    // ]
+    // "Lua.misc.executablePath": "C:/Users/Glaci/Desktop/Gitee/lua-language-server/bin/lua-language-server.exe"
 }

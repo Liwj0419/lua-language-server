@@ -105,40 +105,59 @@ local function WITH_CONFIG(cfg, f)
     end
 end
 
---mytest
-TEST {
-    {
-        path = 'a.lua',
-        content = [[
-            local DataUitls = {}
-            function DataUitls:Func1()
-            end
-            return DataUitls
-        ]]
+WITH_CONFIG({
+    ['Lua.completion.globalAliasFields'] = {
+        'G.Data',
     },
-    {
-        path = 'b.lua',
-        content = [[
-            local DataUitls = G.Data
-            function DataUitls:Func2()
-            end
-        ]]
-    },
-    {
-        path = 'main.lua',
-        main = true,
-        content = [[
-            G.Data = require('a')
-            G.Data.<??>
-        ]]
-    },
-    completion = {
+}, function ()
+    TEST {
         {
-            label = 'Func1',
-            kind  = CompletionItemKind.Method,
+            path = 'a.lua',
+            content = [[
+                local DataUitls = {}
+                DataUitls.Temp1 = 1
+                function DataUitls:Func1()
+                end
+                return DataUitls
+            ]]
+        },
+        {
+            path = 'b.lua',
+            content = [[
+                local DataUitls = G.Data
+                DataUitls.Temp2 = 2
+                function DataUitls:Func2()
+                end
+            ]]
+        },
+        {
+            path = 'main.lua',
+            main = true,
+            content = [[
+                G.Data = require('a')
+                G.Data.<??>
+            ]]
+        },
+        completion = {
+            {
+                label = 'Temp1',
+                kind  = CompletionItemKind.Enum,
+            },
+            {
+                label = 'Temp2',
+                kind  = CompletionItemKind.Enum,
+            },
+            {
+                label = 'Func1(self)',
+                kind  = CompletionItemKind.Method,
+            },
+            {
+                label = 'Func2(self)',
+                kind  = CompletionItemKind.Method,
+            },
         }
     }
-}
+end)
 
 if true then
     return

@@ -3,36 +3,7 @@ local vm        = require 'vm.vm'
 local files     = require 'files'
 local util      = require 'utility'
 local guide     = require 'parser.guide'
-local rpath     = require 'workspace.require-path'
-
-local function isStringListTable(source)
-    if not source or source.type ~= 'table' then
-        return false
-    end
-    local hasString
-    for _, field in ipairs(source) do
-        if field.type ~= 'tableexp'
-        or not field.value
-        or field.value.type ~= 'string' then
-            return false
-        end
-        hasString = true
-    end
-    return hasString
-end
-
-local function collectStringList(source, results, mark)
-    if not isStringListTable(source) then
-        return
-    end
-    for _, field in ipairs(source) do
-        local name = field.value[1]
-        if type(name) == 'string' and not mark[name] then
-            mark[name] = true
-            results[#results+1] = name
-        end
-    end
-end
+local config    = require 'config'
 
 local searchByNodeSwitch = util.switch()
     : case 'global'
@@ -70,92 +41,6 @@ local function searchByNode(source, pushResult, mark)
     end)
 end
 
-local function eachLocalAssignedTo(source, callback)
-    guide.eachSource(guide.getRoot(source), function (src)
-        if src.type ~= 'local'
-        and src.type ~= 'setlocal' then
-            return
-        end
-        if src.value == source then
-            callback(src)
-        end
-    end)
-end
-
-local function searchHostFields(source, callback)
-    local searched = {}
-
-    local function pushField(field)
-        if not searched[field] then
-            searched[field] = true
-            callback(field)
-        end
-    end
-
-    searchByLocalID(source, pushField)
-    searchByNode(source, pushField)
-
-    eachLocalAssignedTo(source, function (src)
-        searchByLocalID(src, pushField)
-        searchByNode(src, pushField)
-    end)
-end
-
-local function collectHostAliasNames(source, names)
-    eachLocalAssignedTo(source, function (src)
-        local name = guide.getKeyName(src)
-        if name then
-            names[name] = true
-        end
-    end)
-end
-
-local function findRequireListNames(source)
-    local cache = vm.getCache('fieldRequireListNames', true)
-    if cache[source] ~= nil then
-        return cache[source]
-    end
-
-    local names = {}
-    local mark  = {}
-
-    searchHostFields(source, function (field)
-        collectStringList(field.value, names, mark)
-        local func = vm.getObjectFunctionValue(field)
-        if func and func.type == 'function' then
-            guide.eachSource(func, function (src)
-                if src.value then
-                    collectStringList(src.value, names, mark)
-                end
-            end)
-        end
-    end)
-
-    guide.eachSource(guide.getRoot(source), function (src)
-        if src.type ~= 'local'
-        and src.type ~= 'setlocal'
-        and src.type ~= 'setfield'
-        and src.type ~= 'setmethod'
-        and src.type ~= 'setindex' then
-            return
-        end
-        if not src.value or not isStringListTable(src.value) then
-            return
-        end
-        local parent = src.parent
-        while parent do
-            if parent == source then
-                collectStringList(src.value, names, mark)
-                return
-            end
-            parent = parent.parent
-        end
-    end)
-
-    cache[source] = names
-    return names
-end
-
 local function getGlobalPath(source)
     if not source then
         return nil
@@ -181,6 +66,24 @@ local function getGlobalPath(source)
         return key
     end
     return parent .. vm.ID_SPLITE .. key
+end
+
+local function normalizeGlobalPath(path)
+    return path:gsub('%.', vm.ID_SPLITE)
+end
+
+local function matchConfiguredGlobalAliasPath(source)
+    local path = getGlobalPath(source)
+    if not path then
+        return nil
+    end
+    local uri = guide.getUri(source)
+    for _, configured in ipairs(config.get(uri, 'Lua.completion.globalAliasFields') or {}) do
+        if path == normalizeGlobalPath(configured) then
+            return configured
+        end
+    end
+    return nil
 end
 
 local function isSameGlobalObject(a, b)
@@ -248,8 +151,13 @@ local function sourceStartsFromAlias(source, aliasNames)
     return false
 end
 
-local function searchRequireListExtensionFields(source, pushResult)
-    local cache = vm.getCache('fieldRequireListExtensionFields', true)
+local function searchConfiguredGlobalAliasFields(source, pushResult)
+    local configured = matchConfiguredGlobalAliasPath(source)
+    if not configured then
+        return
+    end
+
+    local cache = vm.getCache('fieldConfiguredGlobalAliasFields', true)
     if cache[source] ~= nil then
         for _, field in ipairs(cache[source]) do
             pushResult(field)
@@ -259,48 +167,28 @@ local function searchRequireListExtensionFields(source, pushResult)
 
     local fields    = {}
     local fieldMark = {}
-    if not getGlobalPath(source) and not vm.getGlobalNode(source) then
-        cache[source] = fields
-        return
-    end
-
-    for host in vm.compileNode(source):eachObject() do
-        if host.type == 'table' then
-            local hostAliasNames = {}
-            collectHostAliasNames(host, hostAliasNames)
-            local requireNames = findRequireListNames(host)
-            if #requireNames > 0 then
-                for _, requireName in ipairs(requireNames) do
-                    local uri = rpath.findUrisByRequireName(guide.getUri(source), requireName)[1]
-                    local state = uri and files.getState(uri)
-                    local ast = state and state.ast
-                    if ast then
-                        local aliasNames = {}
-                        collectAliasNames(ast, source, aliasNames)
-                        if not next(aliasNames) then
-                            for name in pairs(hostAliasNames) do
-                                aliasNames[name] = true
-                            end
-                        end
-                        if next(aliasNames) then
-                            guide.eachSource(ast, function (src)
-                                if src.type ~= 'setfield'
-                                and src.type ~= 'setmethod'
-                                and src.type ~= 'setindex' then
-                                    return
-                                end
-                                if not sourceStartsFromAlias(src, aliasNames) then
-                                    return
-                                end
-                                if not fieldMark[src] then
-                                    fieldMark[src] = true
-                                    fields[#fields+1] = src
-                                    pushResult(src)
-                                end
-                            end)
-                        end
+    for uri in files.eachFile(guide.getUri(source)) do
+        local state = files.getState(uri)
+        local ast = state and state.ast
+        if ast then
+            local aliasNames = {}
+            collectAliasNames(ast, source, aliasNames)
+            if next(aliasNames) then
+                guide.eachSource(ast, function (src)
+                    if src.type ~= 'setfield'
+                    and src.type ~= 'setmethod'
+                    and src.type ~= 'setindex' then
+                        return
                     end
-                end
+                    if not sourceStartsFromAlias(src, aliasNames) then
+                        return
+                    end
+                    if not fieldMark[src] then
+                        fieldMark[src] = true
+                        fields[#fields+1] = src
+                        pushResult(src)
+                    end
+                end)
             end
         end
     end
@@ -323,7 +211,7 @@ function vm.getFields(source)
 
     searchByLocalID(source, pushResult)
     searchByNode(source, pushResult)
-    searchRequireListExtensionFields(source, pushResult)
+    searchConfiguredGlobalAliasFields(source, pushResult)
 
     return results
 end
