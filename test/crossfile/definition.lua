@@ -79,6 +79,51 @@ function TEST(datas)
     end
 end
 
+local function WITH_CONFIG(cfg, f)
+    local prev = { }
+    for k, v in pairs(cfg) do
+        prev[k] = config.get(nil, k)
+        config.set(nil, k, v)
+    end
+    f()
+    for k, v in pairs(prev) do
+        config.set(nil, k, v)
+    end
+end
+
+WITH_CONFIG({
+    ['Lua.completion.globalAliasFields'] = {
+        'G.Data',
+    },
+}, function ()
+    TEST {
+        {
+            path = 'a.lua',
+            content = [[
+                local DataUitls = {}
+                function DataUitls:Func1()
+                end
+                return DataUitls
+            ]]
+        },
+        {
+            path = 'b.lua',
+            content = [[
+                local DataUitls = G.Data
+                function DataUitls:<!Func2!>()
+                end
+            ]]
+        },
+        {
+            path = 'main.lua',
+            content = [[
+                G.Data = require('a')
+                G.Data.<?Func2?>()
+            ]]
+        },
+    }
+end)
+
 TEST {
     {
         path = 'a.lua',

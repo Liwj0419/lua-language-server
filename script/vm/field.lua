@@ -167,7 +167,7 @@ local function searchConfiguredGlobalAliasFields(source, pushResult)
 
     local fields    = {}
     local fieldMark = {}
-    for uri in files.eachFile(guide.getUri(source)) do
+    for uri in files.eachFile() do
         local state = files.getState(uri)
         local ast = state and state.ast
         if ast then
@@ -196,6 +196,10 @@ local function searchConfiguredGlobalAliasFields(source, pushResult)
     cache[source] = fields
 end
 
+function vm.searchConfiguredGlobalAliasFields(source, pushResult)
+    searchConfiguredGlobalAliasFields(source, pushResult)
+end
+
 ---@param source parser.object
 ---@return       parser.object[]
 function vm.getFields(source)
@@ -211,7 +215,7 @@ function vm.getFields(source)
 
     searchByLocalID(source, pushResult)
     searchByNode(source, pushResult)
-    searchConfiguredGlobalAliasFields(source, pushResult)
+    vm.searchConfiguredGlobalAliasFields(source, pushResult)
 
     return results
 end

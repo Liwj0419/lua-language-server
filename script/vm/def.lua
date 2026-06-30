@@ -56,6 +56,33 @@ local function searchByNode(source, pushResult)
     end
 end
 
+local function searchConfiguredGlobalAliasField(source, pushResult)
+    if source.type == 'field'
+    or source.type == 'method' then
+        source = source.parent
+    end
+    if source.type ~= 'getfield'
+    and source.type ~= 'getmethod'
+    and source.type ~= 'getindex' then
+        return
+    end
+    if not source.node then
+        return
+    end
+    local key = guide.getKeyName(source)
+    if not key then
+        return
+    end
+    if not vm.searchConfiguredGlobalAliasFields then
+        return
+    end
+    vm.searchConfiguredGlobalAliasFields(source.node, function (field)
+        if guide.getKeyName(field) == key then
+            pushResult(field)
+        end
+    end)
+end
+
 ---@param source parser.object
 ---@return       parser.object[]
 function vm.getDefs(source)
@@ -89,6 +116,7 @@ function vm.getDefs(source)
     searchByLocalID(source, pushResult)
     vm.compileByNodeChain(source, pushResult)
     searchByNode(source, pushResult)
+    searchConfiguredGlobalAliasField(source, pushResult)
 
     return results
 end
@@ -130,4 +158,5 @@ function vm.hasDef(source)
         or checkHasDef(searchByLocalID, source, pushResult)
         or checkHasDef(vm.compileByNodeChain, source, pushResult)
         or checkHasDef(searchByNode, source, pushResult)
+        or checkHasDef(searchConfiguredGlobalAliasField, source, pushResult)
 end
