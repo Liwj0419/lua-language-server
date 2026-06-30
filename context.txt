@@ -1,0 +1,1 @@
+请基于当前代码，优化 Lua.completion.globalAliasFields 的扫描性能，同时保证补全和跳转测试仍然通过。
